@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>FastCurrency - Live Exchange Rate Converter with Flags</title>
+    <!-- flag-icons CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fc 0%, #e9eef5 100%);
+            color: #1a2a3f;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #0f2b3d;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .logo-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .logo h1 {
+            font-size: 1.7rem;
+            letter-spacing: -0.5px;
+        }
+
+        .logo p {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.8rem;
+            flex-wrap: wrap;
+            margin-top: 0.8rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 0.8rem;
+        }
+
+        .nav-links button {
+            background: none;
+            border: none;
+            color: #e0e7ff;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.3rem 0;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .nav-links button:hover, .nav-links button.active {
+            color: #ffd966;
+            border-bottom: 2px solid #ffd966;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 28px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
+            padding: 2rem 1.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .active-page {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        /* Custom dropdown styles */
+        .custom-select {
+            position: relative;
+            width: 100%;
+            user-select: none;
+        }
+
+        .select-trigger {
+            background: #fefefe;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            padding: 0.9rem 1rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.2s;
+        }
+
+        .select-trigger:hover, .select-trigger.open {
+            border-color: #0f2b3d;
+            box-shadow: 0 0 0 3px rgba(15,43,61,0.2);
+        }
+
+        .select-trigger .fi {
+            font-size: 1.6rem;
+            width: 1.6rem;
+            background-size: contain;
+        }
+
+        .select-trigger .selected-text {
+            flex: 1;
+        }
+
+        .select-arrow {
+            font-size: 0.8rem;
+            color: #5a6e7c;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            max-height: 260px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            display: none;
+        }
+
+        .dropdown-list.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.7rem 1rem;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .dropdown-item:hover {
+            background: #eef2fa;
+        }
+
+        .dropdown-item .fi {
+            font-size: 1.6rem;
+            width: 1.6rem;
+        }
+
+        .currency-code {
+            font-weight: 600;
+        }
+
+        /* converter layout */
+        .converter-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #1e3a5f;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            font-size: 1.1rem;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            background: #fefefe;
+            transition: 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #0f2b3d;
+            box-shadow: 0 0 0 3px rgba(15,43,61,0.2);
+        }
+
+        .swap-btn {
+            background: #0f2b3d;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            align-self: flex-end;
+            margin-bottom: 0.5rem;
+            transition: 0.2s;
+        }
+
+        .swap-btn:hover {
+            background: #ff9f4a;
+            transform: scale(1.02);
+        }
+
+        .result-area {
+            background: #eef2fa;
+            border-radius: 28px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .rate-info {
+            font-size: 0.9rem;
+            color: #2c5a7a;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-amount {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #0f2b3d;
+            word-break: break-word;
+        }
+
+        .page-content {
+            max-width: 880px;
+            margin: 0 auto;
+        }
+
+        .page-content h2 {
+            font-size: 1.9rem;
+            margin-bottom: 1.2rem;
+            color: #0f2b3d;
+            border-left: 6px solid #ff9f4a;
+            padding-left: 1rem;
+        }
+
+        .page-content h3 {
+            margin: 1.8rem 0 0.5rem 0;
+            color: #1e4663;
+        }
+
+        .page-content p, .page-content li {
+            margin-bottom: 1rem;
+            color: #2c3e4e;
+        }
+
+        .page-content ul {
+            margin-left: 1.8rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #5a6e7c;
+            font-size: 0.8rem;
+            border-top: 1px solid #dce5ef;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                padding: 0 1rem;
+            }
+            .card {
+                padding: 1.5rem;
+            }
+            .result-amount {
+                font-size: 1.8rem;
+            }
+            .nav-links {
+                justify-content: center;
+                gap: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="logo-area">
+        <div class="logo">
+            <h1>💱 FastCurrency</h1>
+            <p>live exchange rates · smart converter</p>
+        </div>
+    </div>
+    <div class="nav-links">
+        <button class="nav-btn active" data-page="converter">🏠 Converter</button>
+        <button class="nav-btn" data-page="about">📄 About Us</button>
+        <button class="nav-btn" data-page="contact">✉️ Contact</button>
+        <button class="nav-btn" data-page="privacy">🔒 Privacy Policy</button>
+        <button class="nav-btn" data-page="terms">⚖️ Terms of Service</button>
+    </div>
+</div>
+
+<div class="container">
+    <div id="converter-page" class="page active-page">
+        <div class="card">
+            <h2 style="margin-bottom: 0.5rem;">Currency Converter</h2>
+            <p style="margin-bottom: 1.8rem; color: #3c6478;">Real-time exchange rates, global coverage.</p>
+
+            <div class="converter-box">
+                <div class="input-group">
+                    <label>💰 Amount</label>
+                    <input type="number" id="amount" value="100" step="any" placeholder="Enter amount">
+                </div>
+                <div class="input-group">
+                    <label>📌 From</label>
+                    <div id="from-select-wrapper" class="custom-select"></div>
+                </div>
+                <div class="input-group">
+                    <label>🎯 To</label>
+                    <div id="to-select-wrapper" class="custom-select"></div>
+                </div>
+                <div>
+                    <button class="swap-btn" id="swapCurrencies">⇄ Swap</button>
+                </div>
+            </div>
+
+            <div class="result-area">
+                <div class="rate-info" id="rateInfo">Fetching latest rates...</div>
+                <div class="result-amount" id="convertedResult">—</div>
+            </div>
+            <p style="font-size: 0.75rem; text-align: center; margin-top: 1rem; color: #7a8e9e;">Rates updated every 5 minutes via exchangerate-api.com</p>
+        </div>
+    </div>
+
+    <!-- About, Contact, Privacy, Terms pages (keep content concise) -->
+    <div id="about-page" class="page">
+        <div class="card page-content">
+            <h2>About FastCurrency</h2>
+            <p>FastCurrency provides fast, reliable currency conversion with real-time exchange rates. Our mission is to offer a transparent, ad-friendly tool for global users.</p>
+            <h3>Why choose us?</h3>
+            <ul><li>Live mid-market rates</li><li>Privacy-focused: no personal data collected</li><li>Mobile-friendly design</li></ul>
+        </div>
+    </div>
+    <div id="contact-page" class="page">
+        <div class="card page-content">
+            <h2>Contact Us</h2>
+            <p>Email: <a href="mailto:yangzhisho@163.com">yangzhisho@163.com</a><br>Business: <a href="mailto:yangzhisho@163.com">yangzhisho@163.com</a></p>
+            <h3>Mailing Address</h3>
+            <p>Shuidong Subdistrict, Dianbai District, Maoming City, Guangdong Province, 525400, China</p>
+        </div>
+    </div>
+    <div id="privacy-page" class="page">
+        <div class="card page-content">
+            <h2>Privacy Policy</h2>
+            <p>We do not collect personal data. Exchange rates are provided by ExchangeRate-API. We may use cookies for essential functionality and ads via Google AdSense.</p>
+        </div>
+    </div>
+    <div id="terms-page" class="page">
+        <div class="card page-content">
+            <h2>Terms of Service</h2>
+            <p>Use of this website constitutes acceptance of our terms. Rates are for informational purposes only. We are not liable for financial decisions made based on our data.</p>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>© 2026 FastCurrency — Real‑time currency converter | <button style="background:none; border:none; color:#2c5a7a; cursor:pointer; text-decoration:underline;" id="footerPrivacyTrigger">Privacy</button></p>
+</footer>
+
+<script>
+    const currencyList = [
+        "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY", "INR", "MXN",
+        "BRL", "RUB", "KRW", "TRY", "ZAR", "SGD", "NZD", "HKD", "SEK", "NOK",
+        "DKK", "PLN", "THB", "IDR", "PHP", "AED", "SAR", "ILS", "CLP", "MYR"
+    ];
+
+    const currencyToCountry = {
+        "USD": "us", "EUR": "eu", "GBP": "gb", "JPY": "jp", "AUD": "au", "CAD": "ca",
+        "CHF": "ch", "CNY": "cn", "INR": "in", "MXN": "mx", "BRL": "br", "RUB": "ru",
+        "KRW": "kr", "TRY": "tr", "ZAR": "za", "SGD": "sg", "NZD": "nz", "HKD": "hk",
+        "SEK": "se", "NOK": "no", "DKK": "dk", "PLN": "pl", "THB": "th", "IDR": "id",
+        "PHP": "ph", "AED": "ae", "SAR": "sa", "ILS": "il", "CLP": "cl", "MYR": "my"
+    };
+
+    let latestBaseData = {};
+    let currentBase = "USD";
+    let fromValue = "USD", toValue = "EUR";
+    const amountInput = document.getElementById("amount");
+    const resultSpan = document.getElementById("convertedResult");
+    const rateInfoSpan = document.getElementById("rateInfo");
+    const swapBtn = document.getElementById("swapCurrencies");
+
+    function getFlagHtml(code) {
+        let country = currencyToCountry[code] || "un";
+        return `<span class="fi fi-${country}"></span>`;
+    }
+
+    class CustomSelect {
+        constructor(container, options, initialValue, onSelect) {
+            this.container = container;
+            this.options = options;
+            this.selectedValue = initialValue;
+            this.onSelect = onSelect;
+            this.isOpen = false;
+            this.render();
+            this.bindEvents();
+        }
+
+        render() {
+            this.container.innerHTML = '';
+            // trigger
+            this.trigger = document.createElement('div');
+            this.trigger.className = 'select-trigger';
+            this.updateTriggerDisplay();
+            // dropdown
+            this.dropdown = document.createElement('div');
+            this.dropdown.className = 'dropdown-list';
+            this.options.forEach(opt => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.innerHTML = `${getFlagHtml(opt)}<span class="currency-code">${opt}</span>`;
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.setValue(opt);
+                    this.close();
+                    if (this.onSelect) this.onSelect(opt);
+                });
+                this.dropdown.appendChild(item);
+            });
+            this.container.appendChild(this.trigger);
+            this.container.appendChild(this.dropdown);
+        }
+
+        updateTriggerDisplay() {
+            this.trigger.innerHTML = `
+                ${getFlagHtml(this.selectedValue)}
+                <span class="selected-text">${this.selectedValue}</span>
+                <span class="select-arrow">▼</span>
+            `;
+        }
+
+        bindEvents() {
+            this.trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggle();
+            });
+            document.addEventListener('click', (e) => {
+                if (!this.container.contains(e.target)) {
+                    this.close();
+                }
+            });
+        }
+
+        toggle() {
+            this.isOpen ? this.close() : this.open();
+        }
+
+        open() {
+            this.isOpen = true;
+            this.dropdown.classList.add('show');
+            this.trigger.classList.add('open');
+        }
+
+        close() {
+            this.isOpen = false;
+            this.dropdown.classList.remove('show');
+            this.trigger.classList.remove('open');
+        }
+
+        setValue(newVal) {
+            this.selectedValue = newVal;
+            this.updateTriggerDisplay();
+        }
+
+        getValue() {
+            return this.selectedValue;
+        }
+    }
+
+    async function fetchRates(base) {
+        rateInfoSpan.innerHTML = "Updating live rates...";
+        try {
+            const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            latestBaseData = data.rates;
+            currentBase = base;
+            updateConversion();
+            const toRate = latestBaseData[toValue];
+            if (toRate) rateInfoSpan.innerHTML = `1 ${base} = ${toRate.toFixed(6)} ${toValue} (live)`;
+            return true;
+        } catch(e) {
+            rateInfoSpan.innerHTML = "⚠️ Rate fetch failed. Retrying...";
+            return false;
+        }
+    }
+
+    function convert(amount, fromCurr, toCurr) {
+        if (!latestBaseData || Object.keys(latestBaseData).length === 0) return null;
+        if (fromCurr === currentBase) {
+            let toRate = latestBaseData[toCurr];
+            return toRate ? amount * toRate : null;
+        } else {
+            let fromRate = latestBaseData[fromCurr];
+            let toRate = latestBaseData[toCurr];
+            if (!fromRate || !toRate) return null;
+            return (amount / fromRate) * toRate;
+        }
+    }
+
+    async function updateConversion() {
+        let amount = parseFloat(amountInput.value) || 0;
+        let newFrom = fromSelect.getValue();
+        let newTo = toSelect.getValue();
+        if (newFrom !== fromValue) {
+            fromValue = newFrom;
+            if (currentBase !== fromValue) await fetchRates(fromValue);
+        } else if (newTo !== toValue) {
+            toValue = newTo;
+        } else if (!latestBaseData || Object.keys(latestBaseData).length === 0) {
+            await fetchRates(fromValue);
+        }
+        fromValue = newFrom;
+        toValue = newTo;
+        if (latestBaseData && Object.keys(latestBaseData).length) {
+            let converted = convert(amount, fromValue, toValue);
+            if (converted !== null) {
+                resultSpan.innerHTML = `${converted.toFixed(4)} ${toValue}`;
+                let toRate = latestBaseData[toValue];
+                if (toRate) rateInfoSpan.innerHTML = `1 ${fromValue} = ${toRate.toFixed(6)} ${toValue} (live)`;
+            } else resultSpan.innerHTML = "Conversion error";
+        } else resultSpan.innerHTML = "Loading...";
+    }
+
+    async function swap() {
+        let fromCurr = fromSelect.getValue();
+        let toCurr = toSelect.getValue();
+        fromSelect.setValue(toCurr);
+        toSelect.setValue(fromCurr);
+        fromValue = toCurr;
+        toValue = fromCurr;
+        await fetchRates(fromValue);
+        updateConversion();
+    }
+
+    const fromWrapper = document.getElementById("from-select-wrapper");
+    const toWrapper = document.getElementById("to-select-wrapper");
+    const fromSelect = new CustomSelect(fromWrapper, currencyList, "USD", (newVal) => {
+        fetchRates(newVal).then(() => updateConversion());
+    });
+    const toSelect = new CustomSelect(toWrapper, currencyList, "EUR", () => {
+        updateConversion();
+    });
+    fromValue = "USD";
+    toValue = "EUR";
+    fetchRates("USD").then(() => updateConversion());
+
+    amountInput.addEventListener("input", updateConversion);
+    swapBtn.addEventListener("click", swap);
+    setInterval(() => {
+        if (document.getElementById("converter-page").classList.contains("active-page")) {
+            fetchRates(fromSelect.getValue()).then(() => updateConversion());
+        }
+    }, 300000);
+
+    // Page navigation
+    const pages = {
+        converter: document.getElementById("converter-page"),
+        about: document.getElementById("about-page"),
+        contact: document.getElementById("contact-page"),
+        privacy: document.getElementById("privacy-page"),
+        terms: document.getElementById("terms-page")
+    };
+    const navBtns = document.querySelectorAll(".nav-btn");
+    function showPage(id) {
+        Object.values(pages).forEach(p => p.classList.remove("active-page"));
+        pages[id].classList.add("active-page");
+        navBtns.forEach(btn => {
+            btn.classList.toggle("active", btn.dataset.page === id);
+        });
+        if (id === "converter" && (!latestBaseData || !Object.keys(latestBaseData).length)) {
+            fetchRates(fromSelect.getValue()).then(() => updateConversion());
+        }
+    }
+    navBtns.forEach(btn => btn.addEventListener("click", () => showPage(btn.dataset.page)));
+    document.getElementById("footerPrivacyTrigger").addEventListener("click", () => showPage("privacy"));
+    showPage("converter");
+</script>
+</body>
+</html>
