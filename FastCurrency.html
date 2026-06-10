@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>FastCurrency - Live Exchange Rate Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fc 0%, #e9eef5 100%);
+            color: #1a2a3f;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        /* header & navigation */
+        .header {
+            background: #0f2b3d;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .logo-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .logo h1 {
+            font-size: 1.7rem;
+            letter-spacing: -0.5px;
+        }
+
+        .logo p {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.8rem;
+            flex-wrap: wrap;
+            margin-top: 0.8rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 0.8rem;
+        }
+
+        .nav-links button {
+            background: none;
+            border: none;
+            color: #e0e7ff;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.3rem 0;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .nav-links button:hover, .nav-links button.active {
+            color: #ffd966;
+            border-bottom: 2px solid #ffd966;
+        }
+
+        /* main content container */
+        .container {
+            max-width: 1300px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* card style */
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 28px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
+            padding: 2rem 1.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .active-page {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        /* converter specific styles */
+        .converter-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #1e3a5f;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            font-size: 1.1rem;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            background: #fefefe;
+            transition: 0.2s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #0f2b3d;
+            box-shadow: 0 0 0 3px rgba(15,43,61,0.2);
+        }
+
+        .swap-btn {
+            background: #0f2b3d;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            align-self: flex-end;
+            margin-bottom: 0.5rem;
+            transition: 0.2s;
+        }
+
+        .swap-btn:hover {
+            background: #ff9f4a;
+            transform: scale(1.02);
+        }
+
+        .result-area {
+            background: #eef2fa;
+            border-radius: 28px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .rate-info {
+            font-size: 0.9rem;
+            color: #2c5a7a;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-amount {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #0f2b3d;
+            word-break: break-word;
+        }
+
+        .loading {
+            font-style: italic;
+            color: #6b7c93;
+        }
+
+        /* generic page content */
+        .page-content {
+            max-width: 880px;
+            margin: 0 auto;
+        }
+
+        .page-content h2 {
+            font-size: 1.9rem;
+            margin-bottom: 1.2rem;
+            color: #0f2b3d;
+            border-left: 6px solid #ff9f4a;
+            padding-left: 1rem;
+        }
+
+        .page-content h3 {
+            margin: 1.8rem 0 0.5rem 0;
+            color: #1e4663;
+        }
+
+        .page-content p, .page-content li {
+            margin-bottom: 1rem;
+            color: #2c3e4e;
+        }
+
+        .page-content ul {
+            margin-left: 1.8rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #5a6e7c;
+            font-size: 0.8rem;
+            border-top: 1px solid #dce5ef;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                padding: 0 1rem;
+            }
+            .card {
+                padding: 1.5rem;
+            }
+            .result-amount {
+                font-size: 1.8rem;
+            }
+            .nav-links {
+                justify-content: center;
+                gap: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-area">
+            <div class="logo">
+                <h1>💱 FastCurrency</h1>
+                <p>live exchange rates · smart converter</p>
+            </div>
+        </div>
+        <div class="nav-links">
+            <button class="nav-btn active" data-page="converter">🏠 Converter</button>
+            <button class="nav-btn" data-page="about">📄 About Us</button>
+            <button class="nav-btn" data-page="contact">✉️ Contact</button>
+            <button class="nav-btn" data-page="privacy">🔒 Privacy Policy</button>
+            <button class="nav-btn" data-page="terms">⚖️ Terms of Service</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- CONVERTER PAGE (default) -->
+        <div id="converter-page" class="page active-page">
+            <div class="card">
+                <h2 style="margin-bottom: 0.5rem;">Currency Converter</h2>
+                <p style="margin-bottom: 1.8rem; color: #3c6478;">Real-time exchange rates, global coverage.</p>
+                
+                <div class="converter-box">
+                    <div class="input-group">
+                        <label>💰 Amount</label>
+                        <input type="number" id="amount" value="100" step="any" placeholder="Enter amount">
+                    </div>
+                    <div class="input-group">
+                        <label>📌 From</label>
+                        <select id="fromCurrency"></select>
+                    </div>
+                    <div class="input-group">
+                        <label>🎯 To</label>
+                        <select id="toCurrency"></select>
+                    </div>
+                    <div>
+                        <button class="swap-btn" id="swapCurrencies">⇄ Swap</button>
+                    </div>
+                </div>
+
+                <div class="result-area">
+                    <div class="rate-info" id="rateInfo">Fetching latest rates...</div>
+                    <div class="result-amount" id="convertedResult">—</div>
+                </div>
+                <p style="font-size: 0.75rem; text-align: center; margin-top: 1rem; color: #7a8e9e;">Rates updated every 5 minutes via exchangerate-api.com</p>
+            </div>
+        </div>
+
+        <!-- ABOUT US page -->
+        <div id="about-page" class="page">
+            <div class="card page-content">
+                <h2>About FastCurrency</h2>
+                <p>FastCurrency was founded with a simple mission: to provide the fastest, most reliable and ad-friendly currency converter for international travelers, freelancers, and business owners. We believe that everyone should have access to transparent, real-time exchange data without hidden fees or complicated interfaces.</p>
+                <h3>🌍 What makes us different?</h3>
+                <p>We combine a clean user interface with powerful real-time API integration. Whether you need to convert USD to EUR, GBP to JPY, or any other major currency, our converter delivers results instantly. Our infrastructure is built for speed and accuracy, pulling data from trusted financial sources.</p>
+                <h3>💡 Our values</h3>
+                <ul>
+                    <li><strong>Transparency:</strong> Live mid-market rates, no misleading spreads.</li>
+                    <li><strong>Privacy first:</strong> We collect zero personal data from converter usage. See our Privacy Policy for details.</li>
+                    <li><strong>Accessibility:</strong> Designed for all devices, from desktop to mobile.</li>
+                </ul>
+                <p>FastCurrency is a project built with ❤️ for global users. We are continuously improving — stay tuned for more tools like crypto exchange and historical charts.</p>
+            </div>
+        </div>
+
+        <!-- CONTACT page -->
+        <div id="contact-page" class="page">
+            <div class="card page-content">
+                <h2>Contact Us</h2>
+                <p>We'd love to hear from you! Whether you have a question about exchange rates, partnership inquiries, or feedback to improve FastCurrency, our team is ready to assist.</p>
+                <h3>📧 Email</h3>
+                <p><strong>General support:</strong> <a href="mailto:yangzhisho@163.com">yangzhisho@163.com</a><br>
+                <strong>Business & advertising:</strong> <a href="mailto:yangzhisho@163.com">yangzhisho@163.com</a></p>
+                <h3>📬 Mailing address</h3>
+                <p>Shuidong Subdistrict<br> Dianbai District, Maoming City<br> Guangdong Province, 525400<br> China</p>
+                <h3>💬 Response time</h3>
+                <p>We typically reply within 24-48 hours on business days. For urgent technical issues, please put "[URGENT]" in the subject line.</p>
+                <p><em>Note: FastCurrency is an independent tool and does not provide financial advisory services.</em></p>
+            </div>
+        </div>
+
+        <!-- PRIVACY POLICY page -->
+        <div id="privacy-page" class="page">
+            <div class="card page-content">
+                <h2>Privacy Policy</h2>
+                <p><strong>Effective date:</strong> June 10, 2026</p>
+                <p>At FastCurrency, accessible from fastcurrency.com, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by FastCurrency and how we use it.</p>
+                <h3>1. Information we collect</h3>
+                <p>We do NOT collect any personally identifiable information (PII) from users of the currency converter tool. No registration, no cookies for tracking individual behavior. However, we use essential cookies to remember your preferred currency selections for a smoother experience (localStorage only).</p>
+                <h3>2. Third-party services</h3>
+                <p>Our exchange rates are provided by <strong>ExchangeRate-API</strong> (exchangerate-api.com). Their privacy policy governs the API data transmission. No personal data is shared — only currency codes and amount are transmitted temporarily to fetch rates.</p>
+                <p>We may display advertisements through Google AdSense (or similar networks) in the future. Google AdSense may use cookies to serve ads based on your prior visits to this or other websites. You may opt-out of personalized advertising by visiting Google Ads Settings.</p>
+                <h3>3. Log files</h3>
+                <p>Like many websites, we collect standard web server logs (IP address, browser type, ISP, date/time stamp, referring/exit pages) for site security and performance analysis. These logs are anonymized and never sold to third parties.</p>
+                <h3>4. Children’s information</h3>
+                <p>We do not knowingly collect any Personal Identifiable Information from children under the age of 13.</p>
+                <h3>5. Changes to this policy</h3>
+                <p>We may update our Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date.</p>
+                <p>If you have additional questions, please contact us via <a href="mailto:yangzhisho@163.com">yangzhisho@163.com</a>.</p>
+            </div>
+        </div>
+
+        <!-- TERMS OF SERVICE page -->
+        <div id="terms-page" class="page">
+            <div class="card page-content">
+                <h2>Terms of Service</h2>
+                <p><strong>Last updated:</strong> June 10, 2026</p>
+                <p>Welcome to FastCurrency. By using our website (the "Service"), you agree to be bound by these Terms of Service.</p>
+                <h3>1. Use of the converter</h3>
+                <p>The exchange rates provided are for informational purposes only and may not be exactly the same as real-world transaction rates offered by financial institutions. FastCurrency is not liable for any financial decisions made based on displayed rates. Always verify with your bank.</p>
+                <h3>2. Intellectual property</h3>
+                <p>All content, design, and code of FastCurrency are owned by FastCurrency Ltd. You may not reproduce, duplicate, or copy any element without permission, except for personal, non-commercial use.</p>
+                <h3>3. Advertisements & third-party links</h3>
+                <p>Our Service may contain advertisements delivered by Google AdSense or similar ad partners. We are not responsible for the content or privacy practices of any advertisers or external sites linked from our pages.</p>
+                <h3>4. Service availability</h3>
+                <p>We strive to maintain 99.9% uptime, but temporary downtime due to maintenance, API disruptions, or unforeseen circumstances may occur. We reserve the right to modify or discontinue any part of the Service without notice.</p>
+                <h3>5. Limitation of liability</h3>
+                <p>To the fullest extent permitted by law, FastCurrency shall not be liable for any indirect, incidental, or consequential damages arising from the use or inability to use the Service, even if advised of the possibility of such damages.</p>
+                <h3>6. Governing law</h3>
+                <p>These Terms shall be governed by the laws of the State of New York, without regard to its conflict of law provisions.</p>
+                <p>By continuing to use FastCurrency, you acknowledge that you have read, understood, and agreed to these Terms.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2026 FastCurrency — Real‑time currency converter | Rates subject to change | <button style="background:none; border:none; color:#2c5a7a; cursor:pointer; text-decoration:underline;" id="footerPrivacyTrigger">Privacy</button> | Designed for global users</p>
+    </footer>
+
+    <script>
+        // ---------- CURRENCY LIST (common 30 currencies) ----------
+        const currencyList = [
+            "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "CNY", "INR", "MXN",
+            "BRL", "RUB", "KRW", "TRY", "ZAR", "SGD", "NZD", "HKD", "SEK", "NOK",
+            "DKK", "PLN", "THB", "IDR", "PHP", "AED", "SAR", "ILS", "CLP", "MYR"
+        ];
+
+        let currentRate = null;       // stores latest rate (fromCurrency -> toCurrency)
+        let latestBaseData = {};      // store full rates object for current base
+        let currentBase = "USD";      // base fromCurrency
+
+        // DOM elements
+        const fromSelect = document.getElementById("fromCurrency");
+        const toSelect = document.getElementById("toCurrency");
+        const amountInput = document.getElementById("amount");
+        const resultSpan = document.getElementById("convertedResult");
+        const rateInfoSpan = document.getElementById("rateInfo");
+        const swapBtn = document.getElementById("swapCurrencies");
+
+        // populate currency dropdowns
+        function populateCurrencies() {
+            currencyList.forEach(code => {
+                let opt1 = document.createElement("option");
+                let opt2 = document.createElement("option");
+                opt1.value = code; opt1.textContent = code;
+                opt2.value = code; opt2.textContent = code;
+                fromSelect.appendChild(opt1);
+                toSelect.appendChild(opt2);
+            });
+            // set default: USD to EUR
+            fromSelect.value = "USD";
+            toSelect.value = "EUR";
+        }
+
+        // fetch rates for a specific base currency (fromCurrency)
+        async function fetchRates(baseCurrency) {
+            rateInfoSpan.innerHTML = "Updating live rates...";
+            try {
+                const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${baseCurrency}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                // data.rates contains { USD: 1.1, EUR: 0.9 ... }
+                latestBaseData = data.rates;
+                currentBase = baseCurrency;
+                // update rate for current pair
+                updateConversion();
+                rateInfoSpan.innerHTML = `1 ${baseCurrency} = ${latestBaseData[toSelect.value]} ${toSelect.value} (live)`;
+                return true;
+            } catch (err) {
+                console.error("API fetch error", err);
+                rateInfoSpan.innerHTML = "⚠️ Rate update failed. Using fallback cached data? Please retry.";
+                resultSpan.innerHTML = "Error fetching rates";
+                return false;
+            }
+        }
+
+        // perform conversion based on amount, from -> to using latestBaseData (or fallback)
+        function convertAmount(amount, fromCurr, toCurr) {
+            if (!latestBaseData || Object.keys(latestBaseData).length === 0) return null;
+            // if fromCurr === currentBase, then rate = latestBaseData[toCurr]
+            // else need cross calculation: amount * (toRate / fromRate)
+            if (fromCurr === currentBase) {
+                const toRate = latestBaseData[toCurr];
+                if (!toRate) return null;
+                return amount * toRate;
+            } else {
+                const fromRate = latestBaseData[fromCurr];
+                const toRate = latestBaseData[toCurr];
+                if (!fromRate || !toRate) return null;
+                // convert to base then to target
+                const inBase = amount / fromRate;
+                return inBase * toRate;
+            }
+        }
+
+        async function updateConversion() {
+            let amountVal = parseFloat(amountInput.value);
+            if (isNaN(amountVal) || amountVal === null) amountVal = 0;
+            const fromCurr = fromSelect.value;
+            const toCurr = toSelect.value;
+
+            // if base has changed or data outdated, refetch
+            if (currentBase !== fromCurr || !latestBaseData || Object.keys(latestBaseData).length === 0) {
+                await fetchRates(fromCurr);
+            } else {
+                // refresh anyway every call to keep rate info up to date, but we could just use existing data, but to reflect eventual changes do periodic refetch? 
+                // For better UX we can re-fetch only if older than 5 min, but for simplicity just call same function? No, to avoid rate stale we use current data but we also call a background update? Let's re-fetch if fromCurr changed? Already handled.
+                // However we also want to show accurate rate info: update display using existing data
+                const toRate = latestBaseData[toCurr];
+                if (toRate) {
+                    rateInfoSpan.innerHTML = `1 ${fromCurr} = ${toRate.toFixed(6)} ${toCurr} (live)`;
+                } else {
+                    rateInfoSpan.innerHTML = `Rate for ${toCurr} not available`;
+                }
+            }
+
+            // after potential fetch, re-calculate
+            if (latestBaseData && Object.keys(latestBaseData).length > 0) {
+                let converted = convertAmount(amountVal, fromSelect.value, toSelect.value);
+                if (converted !== null) {
+                    resultSpan.innerHTML = `${converted.toFixed(4)} ${toSelect.value}`;
+                } else {
+                    resultSpan.innerHTML = "Conversion error";
+                }
+            } else {
+                resultSpan.innerHTML = "Loading rates...";
+            }
+        }
+
+        // swap between from and to currencies
+        function swapCurrencies() {
+            const temp = fromSelect.value;
+            fromSelect.value = toSelect.value;
+            toSelect.value = temp;
+            // re-fetch rates for new base (fromCurrency)
+            fetchRates(fromSelect.value).then(() => updateConversion());
+        }
+
+        // event listeners
+        amountInput.addEventListener("input", updateConversion);
+        fromSelect.addEventListener("change", () => {
+            fetchRates(fromSelect.value).then(() => updateConversion());
+        });
+        toSelect.addEventListener("change", updateConversion);
+        swapBtn.addEventListener("click", () => {
+            swapCurrencies();
+        });
+
+        // initial load
+        populateCurrencies();
+        fetchRates("USD").then(() => updateConversion());
+
+        // Optional: Refresh every 5 minutes automatically to keep rates fresh
+        setInterval(() => {
+            if (document.getElementById("converter-page").classList.contains("active-page")) {
+                fetchRates(fromSelect.value).then(() => updateConversion());
+            }
+        }, 300000); // 5min
+
+        // ----- PAGE NAVIGATION (single page app behavior) -----
+        const pages = {
+            converter: document.getElementById("converter-page"),
+            about: document.getElementById("about-page"),
+            contact: document.getElementById("contact-page"),
+            privacy: document.getElementById("privacy-page"),
+            terms: document.getElementById("terms-page")
+        };
+
+        const navBtns = document.querySelectorAll(".nav-btn");
+        function showPage(pageId) {
+            // hide all pages
+            Object.values(pages).forEach(page => {
+                if(page) page.classList.remove("active-page");
+            });
+            // show selected
+            if(pages[pageId]) pages[pageId].classList.add("active-page");
+            // update active button style
+            navBtns.forEach(btn => {
+                if(btn.getAttribute("data-page") === pageId) {
+                    btn.classList.add("active");
+                } else {
+                    btn.classList.remove("active");
+                }
+            });
+            // if converter becomes active and rates may be stale? optionally refresh
+            if(pageId === "converter") {
+                // if no rates or data old, fetch fresh
+                if(!latestBaseData || Object.keys(latestBaseData).length === 0) {
+                    fetchRates(fromSelect.value).then(() => updateConversion());
+                } else {
+                    updateConversion(); // just refresh display
+                }
+            }
+        }
+
+        navBtns.forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const pageId = btn.getAttribute("data-page");
+                if(pageId) showPage(pageId);
+            });
+        });
+
+        // footer privacy link trigger
+        const footerPrivacy = document.getElementById("footerPrivacyTrigger");
+        if(footerPrivacy) {
+            footerPrivacy.addEventListener("click", (e) => {
+                showPage("privacy");
+            });
+        }
+
+        // initial active page: converter shown by default, but ensure active page highlight sync
+        // make sure active page highlighting is correct
+        showPage("converter");
+        
+        // extra: handle contact mailto clicks clean
+        // ensure all mailto links open default client
+    </script>
+</body>
+</html>
